@@ -1,0 +1,412 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egi's Space - Planner & Cuan Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        soft: {
+                            bg: '#f8f9fa',
+                            purple: '#e0c3fc',
+                            blue: '#8ec5fc',
+                            pink: '#ffc3a0',
+                            card: 'rgba(255, 255, 255, 0.7)',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            /* Soft pastel gradient background */
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            background-attachment: fixed;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        
+        .tab-active {
+            background: white;
+            color: #4f46e5; /* Indigo 600 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex justify-center items-start pt-4 sm:pt-10 pb-10 px-4">
+
+    <!-- Mobile App Container -->
+    <div class="w-full max-w-md w-full relative">
+        
+        <!-- Header -->
+        <header class="mb-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <div>
+                    <p class="text-sm font-medium text-indigo-800/70" id="current-date">Hari ini</p>
+                    <h1 class="text-2xl font-bold text-slate-800">
+                        Hai, <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Egi Sujana!</span> ✨
+                    </h1>
+                </div>
+                <div class="h-12 w-12 rounded-full glass-card flex items-center justify-center text-2xl shadow-sm border-2 border-white/80">
+                    😎
+                </div>
+            </div>
+            <p class="text-sm text-slate-600">Siap bikin hari ini produktif & hemat?</p>
+        </header>
+
+        <!-- Dashboard / Cuan Tracker -->
+        <section class="glass-card rounded-3xl p-6 mb-6 animate-slide-up">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p class="text-sm text-slate-500 font-medium mb-1">Sisa Saldo (Bulan Ini)</p>
+                    <h2 class="text-3xl font-bold text-slate-800" id="total-balance">Rp 0</h2>
+                </div>
+                <div class="bg-indigo-100 text-indigo-600 p-2 rounded-xl">
+                    <i class="ph ph-wallet text-2xl"></i>
+                </div>
+            </div>
+
+            <!-- Savings Goal Bar -->
+            <div class="mt-4">
+                <div class="flex justify-between text-xs font-medium text-slate-500 mb-2">
+                    <span>Target Nabung: Beli Gadget Baru 📱</span>
+                    <span id="savings-progress-text">0%</span>
+                </div>
+                <div class="w-full bg-white/50 rounded-full h-3 mb-1 overflow-hidden shadow-inner">
+                    <div class="bg-gradient-to-r from-indigo-400 to-purple-400 h-3 rounded-full transition-all duration-500 ease-out" id="savings-bar" style="width: 0%"></div>
+                </div>
+                <p class="text-[10px] text-right text-slate-500">Target: Rp 5.000.000</p>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <div class="flex bg-white/40 backdrop-blur-md rounded-2xl p-1 mb-6 shadow-sm animate-slide-up" style="animation-delay: 0.1s;">
+            <button onclick="switchTab('schedule')" id="tab-schedule" class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all tab-active flex items-center justify-center gap-2">
+                <i class="ph ph-calendar-check text-lg"></i> Jadwal
+            </button>
+            <button onclick="switchTab('expense')" id="tab-expense" class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all text-slate-600 flex items-center justify-center gap-2">
+                <i class="ph ph-receipt text-lg"></i> Pengeluaran
+            </button>
+        </div>
+
+        <!-- CONTENT AREA -->
+        <div class="animate-slide-up" style="animation-delay: 0.2s;">
+            
+            <!-- SCHEDULE SECTION -->
+            <div id="schedule-section" class="space-y-4 block">
+                <!-- Add Schedule Form -->
+                <form id="schedule-form" class="glass-card rounded-2xl p-4 flex gap-2 items-center">
+                    <input type="text" id="schedule-input" placeholder="Mau ngapain hari ini?" class="w-full bg-transparent border-none outline-none text-sm placeholder-slate-400 font-medium" required>
+                    <input type="time" id="schedule-time" class="bg-white/50 rounded-lg text-xs p-2 outline-none border border-white/50 text-slate-600" required>
+                    <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2.5 rounded-xl shadow-md transition-transform hover:scale-105 active:scale-95">
+                        <i class="ph ph-plus font-bold"></i>
+                    </button>
+                </form>
+
+                <!-- Schedule List -->
+                <div id="schedule-list" class="space-y-3 mt-4">
+                    <!-- Items will be injected here via JS -->
+                </div>
+            </div>
+
+            <!-- EXPENSE SECTION -->
+            <div id="expense-section" class="space-y-4 hidden">
+                <!-- Add Expense Form -->
+                <form id="expense-form" class="glass-card rounded-2xl p-4 space-y-3">
+                    <div class="flex gap-2">
+                        <input type="text" id="expense-desc" placeholder="Beli apa tadi?" class="flex-1 bg-white/50 rounded-xl p-3 text-sm outline-none border border-white/50 focus:border-purple-300 transition-colors" required>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="relative w-full">
+                            <span class="absolute left-3 top-3 text-slate-400 text-sm">Rp</span>
+                            <input type="number" id="expense-amount" placeholder="0" class="w-full bg-white/50 rounded-xl p-3 pl-9 text-sm outline-none border border-white/50 focus:border-purple-300 transition-colors" required>
+                        </div>
+                        <select id="expense-category" class="bg-white/50 rounded-xl p-3 text-sm outline-none border border-white/50 text-slate-600">
+                            <option value="🍕 Jajan">🍕 Jajan</option>
+                            <option value="🚗 Transport">🚗 Transport</option>
+                            <option value="👕 Lifestyle">👕 Lifestyle</option>
+                            <option value="🎮 Hiburan">🎮 Hiburan</option>
+                            <option value="💡 Lainnya">💡 Lainnya</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 hover:from-pink-500 hover:to-purple-600 text-white font-semibold py-3 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 active:translate-y-0">
+                        Catat Pengeluaran 💸
+                    </button>
+                </form>
+
+                <!-- Expense List -->
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-slate-600 mb-3 px-1">Histori Jajanmu</h3>
+                    <div id="expense-list" class="space-y-3">
+                        <!-- Items will be injected here via JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Logic (In-Memory State) -->
+    <script>
+        // --- State Variables (In-Memory for this session) ---
+        let initialBalance = 2500000; // Saldo awal simulasi
+        let targetSavings = 5000000;
+        
+        let schedules = [
+            { id: 1, text: "Kuliah Pagi/Kerja", time: "08:00", done: false },
+            { id: 2, text: "Olahraga tipis-tipis", time: "16:30", done: false }
+        ];
+        
+        let expenses = [];
+
+        // --- Utility Functions ---
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        };
+
+        const updateDate = () => {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', options);
+        };
+
+        // --- UI Update Functions ---
+        const updateDashboard = () => {
+            const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const currentBalance = initialBalance - totalExpense;
+            
+            document.getElementById('total-balance').textContent = formatRupiah(currentBalance);
+            
+            // Simulasi progress nabung (berdasarkan saldo sisa)
+            let progress = (currentBalance / targetSavings) * 100;
+            if (progress > 100) progress = 100;
+            if (progress < 0) progress = 0;
+            
+            document.getElementById('savings-bar').style.width = `${progress}%`;
+            document.getElementById('savings-progress-text').textContent = `${Math.round(progress)}%`;
+
+            // Peringatan jika saldo menipis
+            const balanceEl = document.getElementById('total-balance');
+            if (currentBalance < 500000) {
+                balanceEl.classList.remove('text-slate-800');
+                balanceEl.classList.add('text-pink-600');
+            } else {
+                balanceEl.classList.add('text-slate-800');
+                balanceEl.classList.remove('text-pink-600');
+            }
+        };
+
+        const renderSchedules = () => {
+            const listEl = document.getElementById('schedule-list');
+            listEl.innerHTML = '';
+
+            if (schedules.length === 0) {
+                listEl.innerHTML = `<div class="text-center p-6 text-slate-500 text-sm">Yah, belum ada jadwal nih. Rebahan aja? 🛌</div>`;
+                return;
+            }
+
+            // Sort by time
+            schedules.sort((a, b) => a.time.localeCompare(b.time));
+
+            schedules.forEach(sched => {
+                const item = document.createElement('div');
+                item.className = `glass-card p-4 rounded-2xl flex items-center justify-between group transition-all ${sched.done ? 'opacity-60 bg-white/30' : ''}`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleSchedule(${sched.id})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${sched.done ? 'bg-green-400 border-green-400 text-white' : 'border-indigo-300 hover:border-indigo-500 text-transparent'}">
+                            <i class="ph ph-check font-bold text-xs"></i>
+                        </button>
+                        <div>
+                            <p class="text-sm font-semibold ${sched.done ? 'line-through text-slate-500' : 'text-slate-700'}">${sched.text}</p>
+                            <p class="text-xs text-indigo-500 font-medium"><i class="ph ph-clock mr-1"></i>${sched.time}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteSchedule(${sched.id})" class="text-slate-300 hover:text-pink-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="ph ph-trash text-lg"></i>
+                    </button>
+                `;
+                listEl.appendChild(item);
+            });
+        };
+
+        const renderExpenses = () => {
+            const listEl = document.getElementById('expense-list');
+            listEl.innerHTML = '';
+
+            if (expenses.length === 0) {
+                listEl.innerHTML = `<div class="text-center p-6 text-slate-500 text-sm">Keren! Belum ada pengeluaran. Pertahankan! 🤑</div>`;
+                return;
+            }
+
+            // Reverse to show newest first
+            [...expenses].reverse().forEach(exp => {
+                const item = document.createElement('div');
+                item.className = `glass-card p-4 rounded-2xl flex items-center justify-between group`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center text-lg shadow-sm">
+                            ${exp.category.split(' ')[0]}
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-700">${exp.desc}</p>
+                            <p class="text-xs text-slate-500">${exp.category.substring(2)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-bold text-pink-500">- ${formatRupiah(exp.amount)}</span>
+                        <button onclick="deleteExpense(${exp.id})" class="text-slate-300 hover:text-pink-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        };
+
+        // --- Action Handlers ---
+        document.getElementById('schedule-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const textInput = document.getElementById('schedule-input');
+            const timeInput = document.getElementById('schedule-time');
+            
+            if(textInput.value && timeInput.value) {
+                schedules.push({
+                    id: Date.now(),
+                    text: textInput.value,
+                    time: timeInput.value,
+                    done: false
+                });
+                textInput.value = '';
+                timeInput.value = '';
+                renderSchedules();
+            }
+        });
+
+        document.getElementById('expense-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const descInput = document.getElementById('expense-desc');
+            const amountInput = document.getElementById('expense-amount');
+            const catInput = document.getElementById('expense-category');
+            
+            if(descInput.value && amountInput.value) {
+                expenses.push({
+                    id: Date.now(),
+                    desc: descInput.value,
+                    amount: parseInt(amountInput.value),
+                    category: catInput.value
+                });
+                descInput.value = '';
+                amountInput.value = '';
+                renderExpenses();
+                updateDashboard();
+            }
+        });
+
+        // Make functions globally available for inline onclick
+        window.toggleSchedule = (id) => {
+            const sched = schedules.find(s => s.id === id);
+            if(sched) {
+                sched.done = !sched.done;
+                renderSchedules();
+            }
+        };
+
+        window.deleteSchedule = (id) => {
+            schedules = schedules.filter(s => s.id !== id);
+            renderSchedules();
+        };
+
+        window.deleteExpense = (id) => {
+            expenses = expenses.filter(e => e.id !== id);
+            renderExpenses();
+            updateDashboard();
+        };
+
+        window.switchTab = (tab) => {
+            const schedSec = document.getElementById('schedule-section');
+            const expSec = document.getElementById('expense-section');
+            const btnSched = document.getElementById('tab-schedule');
+            const btnExp = document.getElementById('tab-expense');
+
+            if (tab === 'schedule') {
+                schedSec.classList.remove('hidden');
+                expSec.classList.add('hidden');
+                
+                btnSched.classList.add('tab-active');
+                btnSched.classList.remove('text-slate-600', 'bg-transparent');
+                
+                btnExp.classList.remove('tab-active');
+                btnExp.classList.add('text-slate-600', 'bg-transparent');
+            } else {
+                expSec.classList.remove('hidden');
+                schedSec.classList.add('hidden');
+                
+                btnExp.classList.add('tab-active');
+                btnExp.classList.remove('text-slate-600', 'bg-transparent');
+                
+                btnSched.classList.remove('tab-active');
+                btnSched.classList.add('text-slate-600', 'bg-transparent');
+            }
+        };
+
+        // --- Initialization ---
+        updateDate();
+        updateDashboard();
+        renderSchedules();
+        renderExpenses();
+
+    </script>
+</body>
+</html>
+
+```
